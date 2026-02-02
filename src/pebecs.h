@@ -1,13 +1,22 @@
-#include "functions.h"
+#ifndef PEBECS_H
+#define PEBECS_H
+#include <iostream>
+#include <memory>
+#include <unordered_map>
+// #include <utility>
+#include <cstdint>
+#include <typeinfo>
+#include <vector>
 
-namespace Functions
+// #include <SFML/Audio.hpp>
+// #include <SFML/Graphics.hpp>
+// #include <SFML/Window.hpp>
+// #include <SFML/Window/Event.hpp>
+
+#include "/drives/pebdrive/code/c++/entt/src/entt/entt.hpp"
+
+namespace pebecs
 {
-
-  /////// entities ///////
-
-  // size_t seemingly is the largest object size for any platform
-
-  // const bool match = (dense[sparse[entity]] == entity);
 
   /////// components ///////
 
@@ -15,21 +24,17 @@ namespace Functions
     // sf::Vector2<float> position;
     // sf::Vector2<float> rotation;
     // sf::Vector2<float> velocity;
-    float pos_x{ 0 };
-    float pos_y{ 0 };
-    float vel_x{ 0 };
-    float vel_y{ 0 };
-    float rot{ 0 };
+    float pos_x;
+    float pos_y;
+    float vel_x;
+    float vel_y;
+    float rot;
   };
 
-  struct vectest {
-    std::vector<float> vec;
-  };
-
-  struct Sprite {
-    sf::Texture texture;
-    sf::Sprite  sprite{ texture };
-  };
+  // struct Sprite {
+  //  sf::Texture texture;
+  //  sf::Sprite  sprite{ texture };
+  //};
 
   struct Health {
     int hp;
@@ -40,7 +45,7 @@ namespace Functions
     int num2;
   };
 
-  // simplest implementation of a sparse set possible
+  // simplest possible implementation of a sparse set
   template <typename Entity, typename Allocator = std::allocator<Entity>>
   class sparse_set {
 public:
@@ -115,6 +120,13 @@ public:
       // std::cout << "Exists: " << this->check_exists(entity) << '\n';
     }
 
+    // returns a reference to the entity's respective component
+    Type& get(Entity& entity) {
+      Type& component{ components[this->sparse[entity]] };
+      // return component;
+      return components[this->sparse[entity]];
+    }
+
 private:
     std::vector<Type> components;
   };
@@ -140,7 +152,7 @@ private:
     Entity entity_count{ 0 };
 
     // idk a good way to implement this so i'll just use a basic counter
-    Entity createEntity() {
+    Entity create() {
       ++entity_count;
       std::cout << "created entity id: " << entity_count << std::endl;
 
@@ -175,13 +187,32 @@ private:
 
       // add component to storage
       storage.update(entity, args...);
+      // storage.update(entity, (std::forward<Args>(args), ...));
+    }
+
+    template <typename Type>
+    type_storage<Type, Entity, Allocator>& getstorage(Entity& entity) {
+      id_type id          = std::hash<std::string>{}(typeid(Type).name());
+      using cpool_type    = type_storage<Type, Entity, Allocator>;
+      cpool_type& storage = static_cast<cpool_type&>(*pools.at(id));
+
+      return storage;
+    }
+
+    template <typename Type>
+    Type& getcomponent(Entity& entity) {
+      id_type id          = std::hash<std::string>{}(typeid(Type).name());
+      using cpool_type    = type_storage<Type, Entity, Allocator>;
+      cpool_type& storage = static_cast<cpool_type&>(*pools.at(id));
+
+      return storage.get(entity);
     }
 
     // seemingly not even entt has a method for making this not annoying
-    template <typename... Args>
+    // template <typename... Args>
     // void construct2(Args&&...args) { // doesn't work
-    void construct2(sf::Vector2<int>, sf::Vector2<int>) { // works
-    }
+    // void construct2(sf::Vector2<int>, sf::Vector2<int>) { // works
+    //}
 
     // so this works fine but is very mildly annoying to me
     // still not sure how to get the cpool type from just the base pointer
@@ -200,41 +231,5 @@ private:
     mainpool_type pools;
   };
 
-  void testing() {
-    using Entity = uint32_t;
-    const int entityLimit{ 10000 };
-
-    Registry<Entity> reg;
-    // test2
-
-    Entity entity1 = reg.createEntity();
-    Entity entity2 = reg.createEntity();
-    Entity entity3 = reg.createEntity();
-    Entity entity4 = reg.createEntity();
-    Entity entity5 = reg.createEntity();
-
-    reg.assign<small>(entity1, 4, 5);
-    reg.assign<small>(entity2, 92, 40);
-    reg.assign<small>(entity5, 342, 388);
-    reg.assign<small>(entity3, 81, 5);
-    reg.assign<small>(entity3, 438279, 312);
-    reg.assign<Transform>(entity4);
-
-    // registry.ctest<small>(4);
-    // registry.assign<Transform>(8, { 3, 4 }, { 55, 3 }, { 3, 56 });
-    // registry.construct<Transform>({ 3, 4 }, { 55, 3 }, { 3, 56 });
-    ;
-    // registry.construct2({ 1, 4 }, { 1, 4 });
-    // Transform test{
-    //  { 3, 4 }, { 55, 3 }, { 3, 56 }
-    //};
-
-    // create entity
-    // Entity entity1 = registry.createEntity();
-  }
-
-  /////// main ///////
-  void mainfunc() {
-  }
-
-} // namespace Functions
+} // namespace pebecs
+#endif
