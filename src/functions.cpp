@@ -12,9 +12,14 @@ namespace Functions
   /////// components ///////
 
   struct Transform {
-    sf::Vector2<float> position;
-    sf::Vector2<float> rotation;
-    sf::Vector2<float> velocity;
+    // sf::Vector2<float> position;
+    // sf::Vector2<float> rotation;
+    // sf::Vector2<float> velocity;
+    float pos_x{ 0 };
+    float pos_y{ 0 };
+    float vel_x{ 0 };
+    float vel_y{ 0 };
+    float rot{ 0 };
   };
 
   struct vectest {
@@ -148,12 +153,6 @@ private:
     // so while this works, i'm kinda horrified to see how it's laid out in memory. i can only imagine just how janky this setup actually is
     template <typename Type, typename... Args>
     void assign(Entity& entity, Args&&... args) {
-      // TODO: add id hash function to prevent adding the same component pool again
-
-      // id_type pool_id=std::hash<Type>{}();
-      // std::hash<Type>(4) test;
-      // size_t test = std::hash<int>{}(4);
-
       using cpool_type = type_storage<Type, Entity, Allocator>;
 
       std::allocator<base_type>  alloc_base;
@@ -163,14 +162,16 @@ private:
 
       cpool = std::allocate_shared<cpool_type>(alloc_derived);
 
-      // TODO: hash id type
-      id_type id{ 4 };
+      // it works! yippee
+      id_type id = std::hash<std::string>{}(typeid(Type).name());
+      // std::cout << "Hash: " << id << '\n';
 
       // add component pool to pools
       pools.try_emplace(id, cpool);
 
       // auto&       autoref = static_cast<cpool_type&>(*pools.at(id));
       cpool_type& storage = static_cast<cpool_type&>(*pools.at(id));
+      // std::cout << typeid(storage).name() << '\n';
 
       // add component to storage
       storage.update(entity, args...);
@@ -203,18 +204,21 @@ private:
     using Entity = uint32_t;
     const int entityLimit{ 10000 };
 
-    Registry<Entity> registry;
+    Registry<Entity> reg;
     // test2
 
-    Entity entity1 = registry.createEntity();
-    Entity entity2 = registry.createEntity();
-    Entity entity3 = registry.createEntity();
-    Entity entity4 = registry.createEntity();
+    Entity entity1 = reg.createEntity();
+    Entity entity2 = reg.createEntity();
+    Entity entity3 = reg.createEntity();
+    Entity entity4 = reg.createEntity();
+    Entity entity5 = reg.createEntity();
 
-    registry.assign<small>(entity1, 4, 5);
-    registry.assign<small>(entity2, 92, 40);
-    registry.assign<small>(entity3, 81, 5);
-    registry.assign<small>(entity3, 438279, 312);
+    reg.assign<small>(entity1, 4, 5);
+    reg.assign<small>(entity2, 92, 40);
+    reg.assign<small>(entity5, 342, 388);
+    reg.assign<small>(entity3, 81, 5);
+    reg.assign<small>(entity3, 438279, 312);
+    reg.assign<Transform>(entity4);
 
     // registry.ctest<small>(4);
     // registry.assign<Transform>(8, { 3, 4 }, { 55, 3 }, { 3, 56 });

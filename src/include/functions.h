@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 // #include <utility>
+#include <typeinfo>
 #include <vector>
 
 #include <SFML/Audio.hpp>
