@@ -204,7 +204,7 @@ private:
     const int entityLimit{ 10000 };
 
     Registry<Entity> registry;
-    // test
+    // test2
 
     Entity entity1 = registry.createEntity();
     Entity entity2 = registry.createEntity();
